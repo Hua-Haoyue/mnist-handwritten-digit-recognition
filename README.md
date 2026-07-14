@@ -173,7 +173,7 @@ python3 main.py
 ---
 
 ## 📑 Project Documents
-📄 [完整项目报告 Word文档](./docs/HNR Project Report.docx)
+📄 [[完整项目报告 Word文档](./docs/HNR Project Report.docx)](https://github.com/Hua-Haoyue/mnist-handwritten-digit-recognition/blob/main/docs/HNR%20Project%20Report.docx)
 
 ---
 
