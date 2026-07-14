@@ -1,1 +1,335 @@
-1
+HNR Project Report
+Abstract
+This project takes Raspberry Pi as the core hardware platform, combines Python and OpenCV libraries, and realizes the handwritten digit recognition function through the joint application of KNN and CNN algorithms. The system integrates multiple modules such as image acquisition, preprocessing, model training, hardware control and result display, and realizes the functions of key-triggered camera shooting, digit recognition and nixie tube display. The comparison experiment shows that the CNN model has higher recognition accuracy for complex handwritten digits. In the process of project development, the team overcame the problem of limited hardware resources and gradually optimized the division of labor, and finally completed the project with efficient collaboration. The project not only exercised the team's hands-on ability and self-learning ability, but also provided valuable experience for the study of computer professional knowledge.
+
+1. Introduction
+Handwritten digit recognition is a classic problem in the field of computer vision and pattern recognition, which has important application value in banknote recognition, postal code sorting and other scenarios. Traditional recognition algorithms are mostly based on manual feature extraction, while deep learning algorithms can automatically learn high-dimensional features of images, thus achieving higher recognition accuracy.
+
+This project takes Raspberry Pi as the hardware carrier, aiming to realize a lightweight handwritten digit recognition system. The system not only completes the core function of digit recognition, but also adds hardware interaction modules such as LED indication and nixie tube display, which improves the practicability and intuitiveness of the system. As shown in Figure “results show”, the Raspberry Pi's GPIO, camera port and other interfaces provide hardware support for the system's multi-functional expansion. In this project, the team faced the challenge of limited hardware resources at the initial stage, and gradually improved the collaboration efficiency through continuous adjustment of the division of labor.
+
+
+Results Show
+2. Software Design & Implementation
+2.1 Project File Overview:
+1.This project implements a complete handwritten digit recognition system through two main program files.
+2.The CreateTrainSet file is responsible for constructing and storing the training dataset and for training a baseline classifier, while the ProcessRealImage file applies the trained model to recognize handwritten digits from real images.
+3.Together, these two files form a complete pipeline from dataset preparation to real-image recognition.
+
+Software Preparation
+2.2 CreateTrainSet Module Description:
+1.Purpose:
+The CreateTrainSet module prepares a standard training dataset for handwritten digit recognition and trains a baseline classifier using the k-Nearest Neighbors (kNN) algorithm provided by OpenCV.
+2.Workflow:
+2.1 Dataset Loading:
+A standard handwritten digit image set is loaded, where digit samples are neatly arranged and share the same size.
+2.2 Feature Construction:
+Each digit image is resized to 20×20 pixels and reshaped into a 400-dimensional one-dimensional feature vector as required by the kNN classifier.
+2.3 Label Generation:
+Labels are generated according to the known dataset structure, with each feature vector assigned a numerical label from 0 to 9.
+2.4 Dataset Saving:
+All feature vectors and labels are saved into a .npz file so that the dataset can be reused without repeating preprocessing.
+2.5 Baseline Training:
+A kNN classifier is created and trained using the prepared dataset. This classifier serves as a baseline recognition method and provides a reference for later CNN-based approaches.
+2.3 ProcessRealImage (Training and Recognition) Module Description:
+1.Purpose:
+The ProcessRealImage module restores the trained model and applies it to recognize handwritten digits from real images captured by a camera or loaded from files.
+2.Workflow:
+2.1 Environment Initialization:
+Required libraries are imported and project paths are configured. Custom functions for preprocessing, segmentation, and output are imported from my_function.
+2.2 Dataset Loading and Model Restoration:
+The training dataset saved in .npz format is loaded, converted to floating-point format, and used to restore the trained kNN classifier.
+2.3 Real Image Input:
+Handwritten digit images are obtained either from stored image files or directly from a camera module.
+2.4 Preprocessing:
+Input images are converted to grayscale and then binarized to separate digit foregrounds from the background and reduce noise.
+2.5 Segmentation:
+Horizontal and vertical splitting methods are applied to extract individual digit regions from the image.
+2.6 Standardization:
+Each segmented digit is converted into a standardized format consistent with the training data.
+2.7 Recognition and Output:
+Standardized digit samples are fed into the trained classifier, and the recognition results are collected and displayed.
+2.4 Image Preprocessing and Denoising Strategies:
+1.Motivation:
+Directly applying kNN to raw images leads to poor performance, making preprocessing essential.
+2.Methods:
+2.1 Grayscale Conversion and Binarization:
+Color images are converted into grayscale images and then binarized to highlight digit foregrounds.
+2.2 Noise Removal:
+Small connected components that are significantly smaller than the digit body are removed using area thresholds to reduce misclassification.
+
+ImgBin Display
+2.5 Stroke Breakage and Thickening Processing:
+1.Problem:
+Uneven writing pressure or imaging conditions may cause broken strokes, which negatively affect kNN feature representations.
+2.Solutions:
+2.1 Dilation:
+		Moderate dilation is applied to thicken strokes.
+2.2 Opening and Closing:
+		Morphological opening and closing operations are used to reconnect broken strokes.
+3.Observation:
+   These methods improved recognition for simpler digits such as “1” and “7”, but results 		remained unstable for more complex digits such as “8” and “9”.
+2.6 Image Segmentation and Single-Digit Recognition Issues:
+1.Challenge:
+Digits in real images have irregular positions, sizes, and may be connected vertically or horizontally.
+2.Method:
+Horizontal and vertical projection-based segmentation methods are used to extract individual digits.
+3.Observed Issues:
+3.1 Vertically arranged digits may be incorrectly grouped into one region.
+3.2 Segmentation results are sensitive to binarization thresholds.
+4.Adjustment:
+Segmentation logic was refined multiple times, and difficult digits such as “8” and “9” were individually analyzed and tuned.
+2.7 Recognition Performance and Limitations:
+1.Performance:
+Preprocessing and segmentation improved recognition accuracy for digits with simpler structures and standardized handwriting styles.
+2.Limitations:
+2.1 High sensitivity to stroke details and handwriting variations.
+2.2 Limited discrimination ability for complex digits such as “8” and “9”.
+2.3 Strong reliance on manually designed preprocessing rules.
+3.Conclusion:
+These limitations motivated the transition from traditional kNN-based methods to CNN-based approaches.
+2.8 MNIST Dataset and CNN Method Description:
+2.8.1 Dataset
+1.Data Design:
+CNN training uses a combined dataset consisting of the MNIST dataset and self-collected handwritten digit data.
+2.Data Sources and Import Order:
+2.1 MNIST Dataset:
+A standard benchmark dataset with fixed 28×28 resolution, providing stable data distribution.
+2.2 Self-Collected Data:
+Handwritten digit images are collected, preprocessed, and converted into MNIST-style 28×28 binary images.
+2.3 Import Order:
+MNIST data are loaded first, followed by the self-collected samples, forming an expanded training dataset.
+3.Format Unification:
+Self-collected samples are cropped to foreground regions, resized with aspect ratio preserved, centered, and standardized to 28×28 binary format.
+4.Motivation:
+Adding self-collected data reduces the distribution gap between training and real test data, improving recognition of complex digits such as “8” and “9”.
+5.Role in the System:
+This data fusion strategy supports the transition from kNN-based recognition to CNN-based recognition.
+2.8.2 Convolution and Pooling Basics with Colab Training:
+1.Convolution and Pooling:
+1.1 Convolution extracts local visual patterns such as edges and strokes using shared filters, providing robustness to small positional shifts.
+1.2 Pooling reduces feature map resolution, lowering computation cost and improving tolerance to minor distortions.
+2.Colab Training Pipeline:
+2.1 MNIST and user_data are loaded and merged.
+2.2 Inputs are normalized and reshaped to (28, 28, 1).
+2.3 A compact CNN model is trained and exported as a TFLite model for deployment.
+3.Motivation for User Data:
+Self-collected samples introduce handwriting variations not covered by MNIST, improving real-world recognition performance.
+2.8.3 Role and Design of my_function:
+1.Overall Purpose:
+The my_function module encapsulates key image-processing and dataset-management operations into reusable functions, allowing CreateTrainSet and ProcessRealImage to remain concise and focused on high-level workflow.
+2.MNIST-Style Standardization:
+2.1 crop_to_foreground:
+Crops the image to the foreground bounding box and removes unnecessary margins caused by lighting artifacts.
+2.2 resize_keep_ratio_to_28:
+Resizes digits proportionally and centers them in a 28×28 canvas to maintain MNIST consistency.
+2.3 to_mnist_28 / cell_to_28x28:
+Combines cropping and resizing into a single standardized pipeline.
+3.Preprocessing and Denoising:
+3.1 preprocess_to_bin:
+Performs grayscale conversion, binarization, morphological operations, and small noise removal.
+3.2 remove_small_cc:
+Removes small connected components based on area thresholds.
+4.Segmentation:
+4.1 _find_segments_1d:
+Detects valid continuous regions in projection profiles while allowing small gaps.
+4.2 image_split_horizontal:
+Extracts digit rows based on row projections.
+4.3 image_split_vertical:
+Splits each row into individual digit cells using column projections.
+5.Dataset Management:
+5.1 make_labels_for_0123456789:
+Automatically generates labels for structured digit sequences.
+5.2 save_user_npz and load_user_npz:
+Support exporting and loading self-collected datasets for CNN training.
+2.9 Experimental Error Analysis and Methodological Reflection:
+1.Observed Phenomena:
+Offline evaluation on self-collected data reported an accuracy of approximately 0.625, while real camera recognition performance appeared significantly higher.
+2.Root Cause:
+Additional handwritten samples of digit “9” were appended to the dataset without updating the label generation logic, resulting in label misalignment during evaluation.
+3.Why CNN Learning Was Not Affected:
+3.1 Label errors occurred during evaluation, not during training.
+3.2 CNN learning depends on correct training labels, not evaluation metrics.
+3.3 Real inference does not reference evaluation labels.
+4.Methodological Insights:
+Accuracy metrics depend critically on correct label management. Evaluation errors must be distinguished from true model limitations.
+2.10 Final Summary:
+The discrepancy between reported accuracy and real recognition performance was caused by label misalignment during dataset expansion rather than insufficient CNN capability. Although this issue reduced the reliability of offline accuracy statistics, it did not affect CNN training or real-world recognition. This analysis highlights the importance of careful data management and rigorous evaluation design in practical machine learning systems.
+
+3. Hardware Design & Implementation
+3.1 Hardware Composition
+The hardware platform of the system is composed of Raspberry Pi , camera, LED light, nixie tube, breadboard, wires and other components. The core parameters of Raspberry Pi are as follows: GPIO expansion interface, camera interface, Micro USB power supply, Gigabit Ethernet port and dual-band WiFi. The detailed pin definition of GPIO provides a basis for the circuit design of the system.
+3.1.1 LED
+(1)Operation: Confirm the Common Anode Configuration of the LED
+Connect a wire from the 3.3V pin on the Raspberry Pi to the breadboard. Then, connect a resistor in series to protect the LED, linking it to Pin 8 of the LED module for an initial test. Select one LED segment pin as the output and connect it back to the GND pin on the Raspberry Pi. The LED lit up, confirming that the LED module operates in a common anode configuration.
+(2)Operation:Confirm the corresponding LED segment for each pin
+Using wires to connect different pins of the LED to the GND pin on the Raspberry Pi. Ensure the power is always disconnected when adjusting the circuit for safe operation. Record the corresponding LED segment for each pin.
+(3)Operation:Connect each pin of the LED to the GPIO pin on the Raspberry Pi
+According to the teacher’s requirement,use the physical BOARD pin numbering scheme.
+Physical Pin (BOARD)	Function Name	LED Pin
+11	GPIO.0	1
+13	GPIO.1	2
+13	GPIO.2	4
+15	GPIO.3	5
+16	GPIO.4	6
+18	GPIO.5	7
+22	GPIO.6	9
+29	GPIO.21	10
+
+
+
+
+
+
+
+3.1.2 Camera
+3.1.2.1 Hardware 
+(1)Operation:Build a button and indicator light circuit
+A branch circuit is connected in parallel with the LED circuit. On this branch, a push-button switch is connected in series with two resistors. An indicator light is connected in series between these resistors. The branch is then connected to the GND pin on the Raspberry Pi to test circuit connectivity.
+
+Challenge:
+When connecting the circuit, it was difficult to accurately determine the connectivity states of the four pins of the Switch---specifically,which two pins remained connected and which two remained disconnected under non-pressed conditions. During the initial circuit connection and testing, the indicator light failed to illuminate regardless of whether the button was pressed or not.
+
+Solution:
+Multiple attempts were made. The Switch was placed across the central divider of the breadboard and then connected into the circuit. This successfully achieved button-controlled connectivity of the branch circuit: the indicator light only illuminated when the button was pressed.
+
+(2)Operation:connected the branch circuit to a GPIO pin on the Raspberry Pi and configured to control the camera function
+
+3.1.2.2 Software
+Physical Pin(BOARD)	Function Name	Control Component
+38	GPIO.28	Camera
+
+（1）My_function Section
+First, BUTTON_PIN is defined as 38, corresponding to the physical pin numbering of the GPIO interface for the camera and define the init_gpio_camera function.
+
+Next, the GPIO pin is initialized with a pull-down resistor configuration. Following the reference code provided, the run_camera_preview function, the capture_photo function, and the wait_button_trigger function are defined. Based on the template program and after multiple tests, the following adjustments were made:
+ The preview duration in the run_camera_preview function was set to 10 seconds; 
+A try-except block was added to the capture_photo function to catch exceptions, facilitating the observation and debugging of issues during program execution, 
+A 1-second camera warm-up delay was included to ensure image quality;
+Additionally, debouncing code was implemented in the wait_button_trigger function to filter out false triggers caused by mechanical switch contact bounce, ensuring the accuracy of the triggering action.
+
+Finally, a cleanup_gpio_camera function is defined to release the system resources occupied by the GPIO pin, preventing abnormal pin states from affecting subsequent program execution.
+（2）Processing Real Image section
+First, import the my_function module and all necessary libraries. Before the functional code, add a reload mechanism for the my_function module to prevent program anomalies caused by the module’s code updates not taking effect. 
+Calling functions from the my_function module：
+Call the run_camera_preview function from my_function to activate the camera's preview mode, allowing verification of the camera's field of view before photo capture. 
+Call the init_gpio_camera function from my_function to set the mode and configure the pull-down resistor for the GPIO pin corresponding to the button, preparing it for button signal detection.
+A try-except block is used to wrap the main loop logic, ensuring stable program execution. 
+An infinite loop is implemented to continuously monitor for button signals. 	Within this loop, the wait_button_trigger function from my_function is 		called; when a valid button press signal is detected, it returns True, and 	the subsequent photo capture logic is executed. 
+The capture_photo function from my_function is then invoked to take a 	photo.
+
+The program is designed for manual exit, allowing the user to press the button again to retake photos if the results are unsatisfactory. 
+After manual termination, a user-friendly message is printed to indicate program completion.
+
+3.1.2.2 Practical Operations 
+（1）Challenge
+During on-site capture,the captured images are somewhat blurry, resulting in suboptimal recognition performance
+Inadequate lighting conditions often lead to processed images containing large areas of blank space.
+（2）Solution
+Optimize the code of the image processing module and adjust parameters according to the capture environment to enhance the clarity of processed photos.
+Use two desk lamps for physical illumination to avoid shadows in photos, thereby improving the effectiveness of subsequent image processing.
+Supplement to the previous solution:
+During the final testing phase, the optimized code was already closely 		aligned with the capture conditions for image processing. Without the	need for manual supplementary lighting to avoid shadows, images with 	satisfactory processing results could still be obtained.
+
+3.2Hardware Control Implementation for Nixie Tube Display
+3.2.1 Core Function Design
+The nixie tube display module is responsible for presenting the multi-row handwritten digit recognition results output by the KNN model. It is implemented based on the RPi.GPIO library, with the core code divided into two parts: the main program (main.py) and the functional module (my_function.py).
+
+3.2.1.1 Pin Mapping and Segment Code Definition
+A common-anode nixie tube is adopted in this project, where the segment pins are driven to low level for lighting and high level for extinguishing. The physical pin mapping of the nixie tube segments to the Raspberry Pi (BOARD mode) and the segment code table for digits 0–9 are defined as follows:
+
+3.2.1.2 Key Functions
+1. init_gpio(): Initializes the GPIO pins in BOARD mode, disables GPIO warnings, and sets all segment pins to output mode with an initial high level (ensuring the nixie tube is off by default).
+2. led_display(digit, display_time=1): Displays a single digit for a specified duration. It retrieves the segment code corresponding to the target digit and sets the GPIO pin levels accordingly. Invalid digits (outside 0–9) are automatically converted to 0 for display.
+3. led_turn_off(): Extinguishes all segments of the nixie tube by setting all GPIO pins to high level.
+4. display_rows_number_list(rowsNumberList, display_time=1): The core function for multi-row digit display, which strictly follows the preset display rules:
+◦ A 1-second interval (with the nixie tube off) is inserted between consecutive digits in the same row.
+◦ A 2-second interval (with the nixie tube off) is inserted before switching to the next row (excluding the first row).
+
+Nixie Tube Display
+3.2.1.3 Main Program Execution
+In main.py, after the KNN model completes multi-row digit recognition and generates rowsNumberList, the display_rows_number_list() function is called to drive the nixie tube for result presentation. The try-except-finally structure is used to handle program interruptions, ensuring that GPIO resources are properly released via cleanup_gpio() regardless of whether the program runs normally or terminates unexpectedly.
+
+3.2.2 Challenges Encountered and Solutions
+3.2.2.1 Challenge 1: Complex Circuit Wiring and Code-Pin Matching
+Problem Description: The breadboard has a dense layout of wires, and the correspondence between the nixie tube segments, Raspberry Pi pins, and code variables (SEG_PIN_MAP, SEG_DICT) is highly prone to confusion. Manual wiring errors often lead to incorrect digit display or no display at all, requiring time-consuming troubleshooting.
+
+Dense Layout of Wires
+Solution: Adopt a two-person collaborative debugging method:
+1. One person is responsible for circuit verification, checking the connection between each nixie tube segment pin and the corresponding Raspberry Pi physical pin against the SEG_PIN_MAP table to ensure no miswiring or loose connections.
+2. The other person is responsible for code debugging, adding print statements in the led_display() function to output the target digit and the corresponding GPIO pin level settings, verifying that the code logic matches the expected segment on/off states.
+This collaborative approach significantly reduces the time spent on troubleshooting wiring and code matching issues, improving the efficiency of hardware-software integration debugging.
+
+3.2.2.2 Challenge 2: Code Compatibility Issues Caused by Front-End Algorithm Adjustments
+Problem Description: The accuracy optimization of the front-end image segmentation and KNN recognition algorithm required modifications to the output format of the recognition results (e.g., the structure of rowsNumberList changed from a one-dimensional list to a two-dimensional list). This led to the original nixie tube display code failing to run properly, requiring corresponding adjustments to the display logic.
+
+Solution: Adopt a minimal modification strategy based on maintaining the original code structure:
+1. First, thoroughly study and understand the code logic of the front-end algorithm module, clarifying the changes in the data format of the recognition results.
+2. Keep the core functions of the nixie tube display module (e.g., init_gpio(), led_display(), led_turn_off()) unchanged, and only modify the loop traversal logic in the display_rows_number_list() function to adapt to the two-dimensional list structure of rowsNumberList.
+3. Use simple and clear loop logic (nested loops for rows and columns) to ensure that the modification scope is minimized, avoiding introducing new bugs due to large-scale code changes.
+This strategy ensures the stability of the display module while quickly adapting to the changes in the front-end algorithm, reflecting the importance of modular program design.
+
+3.2.3 Knowledge and Skills Acquired
+1. GPIO Hardware Programming: Master the basic methods of Raspberry Pi GPIO programming using the RPi.GPIO library, including GPIO mode configuration, pin direction setting, and level output control. Understand the working principle of common-anode nixie tubes and the corresponding segment drive logic.
+2. Hardware-Software Integration Debugging: Gain practical experience in embedded system debugging, learning how to locate and resolve issues arising from mismatches between hardware circuits and software code. Understand the importance of collaborative debugging in hardware-software integration projects.
+3. Modular Program Design: Deepen the understanding of modular programming concepts. By dividing the code into functional modules such as GPIO initialization, single-digit display, and multi-row display, the code is made more readable, maintainable, and adaptable to changes in front-end algorithms.
+4. Error Handling and Resource Management: Learn to use try-except-finally structures to handle program exceptions and ensure the safe release of system resources (GPIO pins in this project). Understand the importance of resource management in embedded systems to avoid hardware damage caused by improper resource release.
+5. Precise Time Control in Embedded Systems: Master the application of the time library in Python for precise time control in embedded projects. Understand how to use time.sleep() to implement accurate time intervals (1 second for intra-row digit gaps and 2 seconds for inter-row gaps), and realize the critical role of stable time control in ensuring the readability of nixie tube display results. Grasp the relationship between time delay settings and user experience in hardware display scenarios.
+
+3.2.4 Optimization Suggestions for Project Improvement
+To enhance the educational value of the project and increase the difficulty of hardware debugging, the following suggestion is proposed for the hardware configuration in future iterations of the project:
+• Remove the model code printed on the nixie tube hardware: The nixie tube used in this project has a model code printed on its surface. Out of curiosity, I searched for this code online before class, which directly revealed that it is a common-anode nixie tube. This reduced the difficulty of subsequent hardware debugging and skipped the process of independently determining the drive mode of the nixie tube. By removing this model code, students will be required to independently judge whether the nixie tube is common-anode or common-cathode through methods such as multimeter measurement or trial-and-error programming with different segment drive logics. This modification can effectively exercise students' hands-on ability and independent problem-solving skills in hardware debugging, without increasing the project cost.
+
+3.3 Hardware Debugging & Encountered Hardware Problems
+The hardware debugging of the system is divided into three steps: power supply test, module function test and joint debugging. However, during the debugging process, we encountered a common hardware problem of Raspberry Pi: poor contact leading to kernel disconnection. As shown in Figure 4 (Raspberry Pi Physical Connection) (from Lab 6 Camera Control), the connection between the Raspberry Pi and the breadboard, camera module is easily loose due to frequent plugging and unplugging or slight vibration, which causes the system kernel to crash and requires reconnection. Each disconnection takes about 10-15 minutes to reconfigure the SSH connection, reload the driver and retest the hardware, which seriously consumes the team's energy, time and patience. For example, when debugging the camera module, the CSI cable was loose for 3 times in one afternoon, which directly delayed the progress of the image acquisition module development.
+
+4. Team Collaboration & Skill Acquisition
+4.1 Difficulties in Team Collaboration & Solutions
+At the initial stage of the project, we faced a critical resource limitation: only one Raspberry Pi was available, which could only be connected to one computer. This meant that only one team member could edit the code and debug the hardware at a time, while the other two members could only provide "spiritual support" without participating in the actual development, which led to low collaboration efficiency and slow project progress in the early stage.
+
+To solve this problem, the team re-planned the division of labor based on the characteristics of each member:
+1.Off-line Task Allocation: The member who could not operate the Raspberry Pi was responsible for off-line tasks, such as writing the initial version of the code .
+2. Task Rotation Mechanism: Set a 2-hour rotation cycle for the member who operates the Raspberry Pi, so that each member can participate in hardware debugging and online code modification.
+3. Real-time Communication: Use online collaboration tools (e.g., WeChat) to share the latest code and test results in real time, so that all members can keep up with the project progress and put forward optimization suggestions in time.
+After adjusting the division of labor, the team's collaboration efficiency was significantly improved.
+4.2 Skills Acquired & Professional Insights
+Through this project, the team members have acquired a wealth of professional skills and formed a deeper understanding of computer professional learning:
+1. Technical Skills:
+◦ Hardware Development: Mastered the basic use of Raspberry Pi, including GPIO port configuration, circuit design and hardware debugging; understood the working principle of peripheral modules such as camera and nixie tube, and improved the hands-on ability of embedded system development.
+◦ Software Development: Proficiency in using Python for image processing (OpenCV) and machine learning (TensorFlow); mastered the implementation of KNN and CNN algorithms, and understood the application of traditional machine learning and deep learning in computer vision.
+◦ Problem-solving Ability: Learned to analyze and solve practical problems such as hardware poor contact, model overfitting and image segmentation error, and improved the ability to combine theory with practice.
+2. Professional Insights:
+◦ Importance of Cross-disciplinary Learning: Computer science is a cross-disciplinary subject that combines software and hardware. Only mastering software programming is not enough; understanding the basic principles of hardware can better design efficient and practical systems. For example, in this project, the problem of hardware poor contact can only be solved by combining both hardware wiring optimization and software reconnection mechanism design.
+◦ Value of Self-learning: In the project, many technologies (e.g. CNN model optimization) are not covered in the classroom, and the team members need to learn through official documents, technical blogs and video tutorials independently. This process makes us realize that self-learning ability is the core ability for computer majors to adapt to the rapid development of technology.
+◦ Significance of Team Collaboration: Complex engineering projects cannot be completed by a single person. Reasonable division of labor, real-time communication and mutual cooperation are the key to the success of the project. Even if facing resource limitations, the project can be promoted efficiently through scientific task allocation.
+
+5. Project Optimization Suggestions
+Aiming at the problems encountered in the project, especially the hardware problems of Raspberry Pi, the following optimization suggestions are put forward for the project and subsequent similar projects:
+5.1 Hardware Improvement:
+◦ Optimize the Connection Mode: Use fixed connection accessories (e.g., CSI cable fixing clip, GPIO pin header with lock) to replace the original loose Dupont wire and cable, reducing the probability of poor contact. For example, install a plastic fixing clip on the CSI camera cable to prevent the cable from falling off due to vibration.
+◦ Prepare Spare Hardware: Equip each team with at least two Raspberry Pi and spare peripheral modules (e.g., camera, nixie tube), so that the project can continue to develop through spare hardware when one device fails, avoiding time loss caused by hardware problems.
+◦ Add Hardware Protection: Put the Raspberry Pi and breadboard into a shockproof plastic box to reduce the impact of external vibration on the hardware connection; use anti-static wristbands during operation to prevent static electricity from damaging the Raspberry Pi kernel.
+
+5.2 Software Optimization:
+◦ Add Automatic Reconnection Mechanism: Write a Python script to detect the connection state of the Raspberry Pi in real time. When the kernel is disconnected, the script automatically re-establishes the SSH/VNC connection and reloads the driver, reducing the manual operation time.
+◦ Offline Development Environment Construction: Build a Raspberry Pi simulation environment on the PC (e.g., using QEMU emulator), so that team members can carry out code writing and testing off-line, and only need to upload the code to the real Raspberry Pi for final debugging, improving the utilization rate of human resources.
+
+5.3 Project Management:
+◦ Pre-training of Hardware Operation: Conduct a special training on Raspberry Pi hardware operation before the project starts, including correct wiring, plugging and unplugging methods, and common fault handling, so that team members can master the basic hardware operation skills and reduce the probability of artificial hardware damage.
+◦ Set Buffer Time for Hardware Problems: Reserve 10%-15% of the total project time as a buffer for hardware failure handling, so as to avoid the delay of the overall project progress due to unexpected hardware problems.
+
+
+6. Acknowledgements
+First of all, we would like to express our sincere gratitude to the course teacher and teaching assistants for their careful and patient guidance during the project. When we encountered difficulties in hardware and software development , the teacher and teaching assistants not only provided detailed technical solutions, but also guided us to analyze the root causes of the problems, which made us gain more than just the ability to solve specific problems.
+Secondly, we appreciate the school for setting up this practical project. The project combines embedded system, computer vision and machine learning, which is highly consistent with the development trend of computer science and technology. It not only consolidates the theoretical knowledge we learned in the classroom, but also exercises our hands-on ability and innovation ability, and makes us realize the practical value of professional knowledge.
+Finally, we would like to thank our team members for their mutual support and cooperation. Although we faced resource limitations, hardware problems and software difficulties during the project, we successfully completed the project through joint efforts and gained precious experience in team collaboration and problem-solving.
+
+7. Conclusion
+This project successfully realizes the handwritten digit recognition system based on Raspberry Pi, which integrates the functions of image acquisition, preprocessing, model training, hardware control and result display. The team overcame the problem of limited hardware resources and optimized the division of labor to achieve efficient collaboration. The comparison experiment shows that the CNN model has higher recognition accuracy than the KNN model. In the process of project development, we not only acquired rich technical skills, but also formed a deeper understanding of computer professional learning. At the same time, we put forward targeted optimization suggestions for the hardware problems of Raspberry Pi encountered in the project, which provides a reference for subsequent similar projects. This project is an important practice for us to combine theory with practice, and lays a solid foundation for our future study and work in the field of computer science.
+
+
+8.Supplemental Video 
+Experimental video available at: 
+https://video.weibo.com/show?fid=1034:5250434453930056 , 
+which is also attached to the email for details of the project process
+
+The attached video document the experimental process of our group project, vividly demonstrating the team's solidarity through both online and offline collaboration, as well as the members' self-driven dedication to research and learning. These materials capture authentic moments of our joint efforts: for instance, there are recordings of the entire afternoon we spent practicing and adapting to the integration of hardware and software, a process that required repeated trials and mutual support to overcome technical frictions. Collectively, these visual records serve as tangible evidence of our team's collaborative spirit and proactive learning attitude, embodying how we navigated challenges through shared commitment and complementary efforts.
