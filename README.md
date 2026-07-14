@@ -1,4 +1,7 @@
 # 🖥️ Raspberry Pi Handwritten Digit Recognition System
+
+📄 [完整项目报告（Word文档）](./docs/HNR Project Report.docx)
+
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python)](https://www.python.org/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.x-5C3EE8)](https://opencv.org/)
 [![TensorFlow Lite](https://img.shields.io/badge/TensorFlow-Lite-FF6F00?logo=tensorflow)](https://www.tensorflow.org/lite)
